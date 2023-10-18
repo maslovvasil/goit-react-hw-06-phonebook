@@ -1,14 +1,39 @@
 import { useState } from 'react';
 import css from './ContactForm.module.css';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector  } from 'react-redux';
 import { addContact } from 'redux/phonebookSlice';
 import { nanoid } from 'nanoid';
 
-export default function ContactForm({ onSubmit }) {
-  const dispatch = useDispatch();
+import { getVissibleContacts } from 'redux/selectors';
+import { ToastContainer, toast, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
+
+export default function ContactForm() {
 
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+
+  const contacts = useSelector(getVissibleContacts);
+  const dispatch = useDispatch();
+
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    const isInContacts = contacts.some(
+      contact => contact.name.toLowerCase().trim() === name.toLowerCase().trim()
+    );
+    if (isInContacts) {
+      toast.info(`${name} is already in contacts`, {
+        position: toast.POSITION.TOP_RIGHT,
+      });
+      return;
+    }
+    dispatch(addContact({ id: nanoid(), name, number }));
+    setName('');
+    setNumber('');
+  };
 
   const handleChange = event => {
     const { name, value } = event.currentTarget;
@@ -25,20 +50,9 @@ export default function ContactForm({ onSubmit }) {
     }
   };
 
-  const handleSubmit = event => {
-    event.preventDefault();
-
-    dispatch(addContact({ name, number, id: nanoid() }));
-    reset();
-  };
-
-  const reset = () => {
-    setName('');
-    setNumber('');
-  };
-
   return (
     <form className={css.form} onSubmit={handleSubmit}>
+      <ToastContainer transition={Slide} />
       <label className={css.form__label}>
         {'Name'}
         <input
